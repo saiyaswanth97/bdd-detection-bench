@@ -113,14 +113,16 @@ if __name__ == "__main__":
             f"Validation data folder not found: {val_data_folder}. Please update the path."
         )
 
-    files = list(Path(train_data_folder).glob("*.json"))
-    if not files:
+    train_files = list(Path(train_data_folder).glob("*.json"))
+    if not train_files:
         raise FileNotFoundError(
             f"No JSON files found in the train data folder: {train_data_folder}. Please check the contents."
         )
 
-    train_counts_per_image = compute_class_distribution(files, all_occurrences=False)
-    train_counts_all = compute_class_distribution(files, all_occurrences=True)
+    train_counts_per_image = compute_class_distribution(
+        train_files, all_occurrences=False
+    )
+    train_counts_all = compute_class_distribution(train_files, all_occurrences=True)
     train_avg_per_image = {
         class_name: (train_counts_all[class_name] / train_counts_per_image[class_name])
         if train_counts_per_image[class_name] > 0
@@ -128,23 +130,26 @@ if __name__ == "__main__":
         for class_name in CLASSES.keys()
     }
 
-    files = list(Path(val_data_folder).glob("*.json"))
-    if not files:
+    val_files = list(Path(val_data_folder).glob("*.json"))
+    if not val_files:
         raise FileNotFoundError(
             f"No JSON files found in the validation data folder: {val_data_folder}. Please check the contents."
         )
 
-    val_counts_per_image = compute_class_distribution(files, all_occurrences=False)
-    val_counts_all = compute_class_distribution(files, all_occurrences=True)
+    val_counts_per_image = compute_class_distribution(val_files, all_occurrences=False)
+    val_counts_all = compute_class_distribution(val_files, all_occurrences=True)
     train_val_ratio_all = {
         class_name: (train_counts_all[class_name] / val_counts_all[class_name])
+        * (len(val_files) / len(train_files))
         if val_counts_all[class_name] > 0
         else 0
         for class_name in CLASSES.keys()
     }
     train_val_ratio_per_image = {
         class_name: (
-            train_counts_per_image[class_name] / val_counts_per_image[class_name]
+            train_counts_per_image[class_name]
+            / val_counts_per_image[class_name]
+            * (len(val_files) / len(train_files))
         )
         if val_counts_per_image[class_name] > 0
         else 0
@@ -183,7 +188,7 @@ if __name__ == "__main__":
         log_scale=False,
     )
 
-    class_cooccurrence_matrix = compute_class_cooccurrence_matrix(files)
+    class_cooccurrence_matrix = compute_class_cooccurrence_matrix(train_files)
     plt.figure(figsize=(12, 10))
     plt.imshow(class_cooccurrence_matrix, cmap="viridis")
     plt.colorbar(label="Co-occurrence Rate")
