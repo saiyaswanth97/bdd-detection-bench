@@ -1,0 +1,41 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.11.2
+    hooks:
+      # Run the linter.
+      - id: ruff
+        types_or: [python, pyi]
+        args: [--config, pyproject.toml, --fix]
+      # Run the formatter.
+      - id: ruff-format
+        types_or: [python, pyi]
+        args: [--config, pyproject.toml]
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: insert-license
+        name: "Insert license header in python source files"
+        args:
+          - --license-filepath
+          - .license_header
+          - --use-current-year
+          - --detect-license-in-X-top-lines=3
+        types_or: [python, pyi]
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.5.11
+    hooks:
+      - id: pydoclint
+        args:
+          - --style=google
+          - --check-return-types=True
+          - --arg-type-hints-in-docstring=True
+          - --arg-type-hints-in-signature=True
+          - --check-arg-order=True
+          - --skip-checking-short-docstrings=False
+          - --skip-checking-raises=False
+          - --allow-init-docstring=True
+          - --require-return-section-when-returning-nothing=False
+          - --check-return-types=True
+          - --ignore-underscore-args=True
+          - --check-class-attributes=False
