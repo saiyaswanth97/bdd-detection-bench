@@ -46,14 +46,29 @@ The script analyzes these 10 BDD100K categories (in-order):
 
 ## 🚀 Quick Start
 
+### Run Class Distribution Analysis
+
 ```bash
-# Run the analysis
+# Run the main distribution analysis
 python3 -m src.task1.class_distribution
 ```
 
 This will:
 - Process 70,000 training images & 10,000 validation images
 - Generate 6 visualization plots & save them to `src/task1/images/`
+
+### Run Anomaly Detection & Sample Extraction
+
+```bash
+# Run anomaly detection and extract sample images
+python3 -m src.task1.anamoly_detection
+```
+
+This will:
+- Compute class bitmasks for presence-based queries
+- Generate class presence distribution plots
+- Extract sample images with specific class patterns (e.g., images with 40 cars, 30 signs, etc.)
+- Create frequency distribution histograms for all classes
 
 ## 📊 Generated Visualizations
 
@@ -102,6 +117,88 @@ Compares how many images contain each class between train and test sets.
 Shows which classes tend to appear together in the same images. Uses log scale for better visualization.
 
 ![Class Co-occurrence Matrix](images/class_cooccurrence.png)
+
+---
+
+## 🔍 Anomaly Detection & Sample Extraction
+
+The `anamoly_detection.py` script provides advanced querying and sample extraction capabilities.
+
+### Generated Analysis
+
+#### All Class Frequency Distribution
+
+Subplots showing instance count distributions for each of the 10 classes:
+
+![All Class Frequency Distribution](images/all_class_frequency_distribution.png)
+
+#### Class Presence Distributions
+
+Multiple histogram plots showing the distribution of class presence patterns:
+
+##### Full Distribution Across All Classes
+
+![Class Presence Distribution](images/class_presence_distribution.png)
+
+##### Distribution for Cars, Signs, and Lights Only
+
+![Class Presence Distribution Cars Signs Lights](images/class_presence_distribution_cars_signs_lights.png)
+`[none, only car, only sign. car&sign, only light, car&light, sign&light, all]`
+
+##### Distribution Excluding Cars, Signs, and Lights
+
+![Class Presence Distribution No Cars Signs Lights](images/class_presence_distribution_no_cars_signs_lights.png)
+
+#### Sample Images
+
+Extracted sample images demonstrating specific patterns:
+
+##### Sample: Image with Train
+
+![Sample Train](images/sample_train.jpg)
+
+##### Sample: No Cars, Signs, or Lights
+
+![Sample No Car Sign Light](images/sample_no_car_sign_light.jpg)
+
+##### Image with 40 Cars
+
+![Image 40 Cars](images/image_40_cars.jpg)
+
+##### Image with 30 Traffic Signs
+
+![Image 30 Signs](images/image_30_signs.jpg)
+
+##### Image with 40 Persons
+
+![Image 40 Persons](images/image_40_persons.jpg)
+
+##### Image with 15 Bikes
+
+![Image 15 Bikes](images/image_15_bikes.jpg)
+
+##### Image with 10 Motorcycles
+
+![Image 10 Motorcycles](images/image_10_motorcycles.jpg)
+
+##### Image with 4 Trains
+
+![Image 4 Trains](images/image_4_trains.jpg)
+
+### Query Examples
+
+```python
+# Presence-based query: Find images with trains present
+query_bitmask = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]  # Only train (10th class)
+sample_ids = query_presence_sample_id(image_names, class_bitmask, query_bitmask)
+
+# Presence-based query: Find images WITHOUT cars, signs, or lights
+query_bitmask = [-1, -1, -1, 0, 0, 0, 0, 0, 0, 0]  # No car, sign, light
+sample_ids = query_presence_sample_id(image_names, class_bitmask, query_bitmask)
+
+# Frequency-based query: Find images with exactly 40 cars
+sample_ids = query_frequency_sample_id(image_names, instance_counts, query=(0, 40))
+```
 
 ---
 
