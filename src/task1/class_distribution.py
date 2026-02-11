@@ -160,13 +160,13 @@ if __name__ == "__main__":
     plot_class_distribution(
         train_counts_per_image,
         "Class Distribution (Once per Image) in BDD100K Train Set",
-        "src/task1/images/class_distribution_per_image.png",
+        "src/task1/images/class_cumulative_frequency.png",
         log_scale=True,
     )
     plot_class_distribution(
         train_counts_all,
         "Class Distribution (All Occurrences) in BDD100K Train Set",
-        "src/task1/images/class_distribution_all.png",
+        "src/task1/images/class_cumulative_presence.png",
         log_scale=True,
     )
     plot_class_distribution(

@@ -57,19 +57,19 @@ This will:
 
 ## 📊 Generated Visualizations
 
-### 1. Class Distribution (Per Image)
+### 1. Class Cumulative Presence
 
 Shows how many images contain each class at least once. This represents the "presence" of each class across the dataset.
 
-![Class Distribution Per Image](images/class_distribution_per_image.png)
+![Class Cumulative Presence](images/class_cumulative_presence.png)
 
 ---
 
-### 2. Class Distribution (All Occurrences)
+### 2. Class Cumulative Instances
 
 Shows the total count of all object instances across the dataset. Multiple instances per image are counted separately.
 
-![Class Distribution All](images/class_distribution_all.png)
+![Class Cumulative Instances](images/class_cumulative_frequency.png)
 
 ---
 
@@ -81,18 +81,18 @@ Shows the average number of times each class appears in images where it's presen
 
 ---
 
-### 4. Train/Test Ratio (All Occurrences)
+### 4. Train/Test Ratio
 
 Compares the total number of object instances between train and validation sets. Ignore this. From the plots looks like the split is done based on "presence" of classes rather than total instances.
 
-![Train Validation Ratio All](images/class_occurrence_ratio_all.png)
+![Train Validation Ratio Frequency](images/class_occurrence_ratio_all.png)
 
 ---
 
-### 5. Train/Validation Ratio (Per Image)
+### 5. Train/Validation Ratio (Presence)
 Compares how many images contain each class between train and test sets.
 
-![Train Validation Ratio Per Image](images/class_occurrence_ratio_per_image.png)
+![Train Validation Ratio](images/class_occurrence_ratio_per_image.png)
 
 
 ---
@@ -104,3 +104,4 @@ Shows which classes tend to appear together in the same images. Uses log scale f
 ![Class Co-occurrence Matrix](images/class_cooccurrence.png)
 
 ---
+
