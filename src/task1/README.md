@@ -202,3 +202,12 @@ sample_ids = query_frequency_sample_id(image_names, instance_counts, query=(0, 4
 
 ---
 
+### Action items:
+[] Add occulsion and truncation to the mix
+[] Add Anomoly detection using the bounding boxes
+[] Redo the readme file with more explanation
+[] Containerization
+[] Add `uv`
+[] Explore & add daskboard
+
+---
