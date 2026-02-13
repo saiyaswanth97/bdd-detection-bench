@@ -97,12 +97,19 @@ def parse_annotations(json_file: str) -> Tuple[str, List[dict]]:
         Tuple[str, List[dict]]: Image name and list of annotations
     Raises:
         FileNotFoundError: If the annotation file does not exist.
+        ValueError: If there is an error parsing the JSON file.
+        RuntimeError: If there is an unexpected error reading the file.
     """
     if not os.path.exists(json_file):
         raise FileNotFoundError(f"Annotation file {json_file} does not exist.")
 
-    with open(json_file, "r") as f:
-        data = json.load(f)
+    try:
+        with open(json_file, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Error parsing JSON file {json_file}: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error reading file {json_file}: {e}")
 
     annotations = []
     name = data["name"]

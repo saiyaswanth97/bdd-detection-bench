@@ -15,6 +15,7 @@ if __name__ == "__main__":
 
     for folder, output in FOLDERS:
         files = os.listdir(ANN_FOLDER + folder)
+        files = [f for f in files if f.endswith(".json")]
         output_file = ANN_FOLDER + output
         output_json = {"images": [], "annotations": [], "categories": []}
         ann_id = 0
