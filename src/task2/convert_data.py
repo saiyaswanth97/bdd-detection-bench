@@ -14,7 +14,7 @@ if __name__ == "__main__":
     FOLDERS = [["train", "train.json"], ["test", "test.json"], ["val", "val.json"]]
 
     for folder, output in FOLDERS:
-        files = os.listdir(ANN_FOLDER + folder)
+        files = os.listdir(os.path.join(ANN_FOLDER, folder))
         files = [f for f in files if f.endswith(".json")]
         output_file = ANN_FOLDER + output
         output_json = {"images": [], "annotations": [], "categories": []}
@@ -35,17 +35,18 @@ if __name__ == "__main__":
             )
 
             for label in labels:
+                x1 = min(label.bbox.x1, label.bbox.x2)
+                x2 = max(label.bbox.x1, label.bbox.x2)
+                y1 = min(label.bbox.y1, label.bbox.y2)
+                y2 = max(label.bbox.y1, label.bbox.y2)
                 output_json["annotations"].append(
                     {
                         "image_id": image_id,
                         "category_id": label.class_id,
-                        "bbox": [
-                            label.bbox.x1,
-                            label.bbox.y1,
-                            label.bbox.x2 - label.bbox.x1,
-                            label.bbox.y2 - label.bbox.y1,
-                        ],
+                        "bbox": [x1, y1, x2 - x1, y2 - y1],
                         "id": ann_id,
+                        "area": (x2 - x1) * (y2 - y1),
+                        "iscrowd": 0,
                     }
                 )
                 ann_id += 1

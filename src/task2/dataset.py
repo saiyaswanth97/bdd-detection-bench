@@ -44,8 +44,8 @@ def make_coco_dicts(mode: str) -> List[Dict]:
             f"Invalid mode {mode}. Expected one of {list(DATASETS.keys())}."
         )
 
-    json_file = DATA_FOLDER + DATASETS[mode]["json"]
-    img_dir = DATA_FOLDER + DATASETS[mode]["img_dir"]
+    json_file = os.path.join(DATA_FOLDER, DATASETS[mode]["json"])
+    img_dir = os.path.join(DATA_FOLDER, DATASETS[mode]["img_dir"])
     dataset_name = DATASETS[mode]["name"]
 
     if dataset_name in DatasetCatalog.list():
@@ -69,11 +69,13 @@ def make_coco_dicts(mode: str) -> List[Dict]:
         return DatasetCatalog.get(dataset_name)
 
 
-def get_transform(is_train: bool) -> DatasetMapper:
+def get_transform(is_train: bool, keep_gt: bool = False) -> DatasetMapper:
     """
     Get data augmentation transforms for training or validation. Original img size: 1280x720.
     Args:
         is_train (bool): Whether to return transforms for training or validation.
+        keep_gt (bool): When False and is_train=False, GT annotations are stripped.
+            Set True to retain GT annotations in val/test (e.g. for visualization).
     Returns:
         DatasetMapper: A Detectron2 DatasetMapper with the specified augmentations.
     """
@@ -100,7 +102,7 @@ def get_transform(is_train: bool) -> DatasetMapper:
             transforms.ResizeShortestEdge(short_edge_length=720, max_size=1280),
         ]
         return DatasetMapper(
-            is_train=False,
+            is_train=keep_gt,
             augmentations=augmentation,
             image_format="BGR",
             use_instance_mask=False,
