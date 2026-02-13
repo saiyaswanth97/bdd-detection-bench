@@ -81,6 +81,7 @@ class Annotation:
     """Annotation for a single object in an image"""
 
     class_name: str
+    class_id: int
     bbox: BBox
     occlusion: bool
     truncation: bool
@@ -116,12 +117,14 @@ def parse_annotations(json_file: str) -> Tuple[str, List[dict]]:
             x2=item["box2d"]["x2"],
             y2=item["box2d"]["y2"],
         )
+        class_id = CLASSES[category_name]
         occlusion = item["attributes"]["occluded"]
         truncation = item["attributes"]["truncated"]
         signal_color = item["attributes"]["trafficLightColor"]
         annotations.append(
             Annotation(
                 class_name=category_name,
+                class_id=class_id,
                 bbox=bbox,
                 occlusion=occlusion,
                 truncation=truncation,
@@ -152,12 +155,12 @@ if __name__ == "__main__":
     for ann in annotations:
         if ann.class_name == "traffic light":
             print(
-                f"Class: {ann.class_name}, BBox: {ann.bbox.to_coco()}, "
+                f"Class: {ann.class_name}, ID: {ann.class_id}, BBox: {ann.bbox.to_coco()}, "
                 f"Occlusion: {ann.occlusion}, Truncation: {ann.truncation}, "
                 f"Signal Color: {ann.signal_color}"
             )
         else:
             print(
-                f"Class: {ann.class_name}, BBox: {ann.bbox.to_coco()}, "
+                f"Class: {ann.class_name}, ID: {ann.class_id}, BBox: {ann.bbox.to_coco()}, "
                 f"Occlusion: {ann.occlusion}, Truncation: {ann.truncation}"
             )
