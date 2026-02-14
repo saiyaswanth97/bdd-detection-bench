@@ -40,7 +40,6 @@ class TOPKVisualizationHook(HookBase):
 
     def after_step(self):
         if (self.trainer.iter + 1) % self.eval_period == 0:
-            self.trainer.test(self.cfg, self.trainer.model)
             self.visualize_topk_predictions()
 
     def _visualize_gt_pred_clean(self, inp, output, metadata):
@@ -144,20 +143,23 @@ if __name__ == "__main__":
 
     cfg.DATASETS.TRAIN = ("bdd_dataset_train",)
     cfg.DATASETS.TEST = ("bdd_dataset_val",)
-    cfg.DATALOADER.NUM_WORKERS = 4
+    cfg.DATALOADER.NUM_WORKERS = 16
 
-    cfg.SOLVER.IMS_PER_BATCH = 4
-    cfg.SOLVER.BASE_LR = 0.00025
+    cfg.SOLVER.AMP.ENABLED = False
+    cfg.SOLVER.IMS_PER_BATCH = 24
+    cfg.SOLVER.BASE_LR = 0.02 * cfg.SOLVER.IMS_PER_BATCH / 16
     EPOCHS = 10
     cfg.SOLVER.MAX_ITER = len(train_dataset) // cfg.SOLVER.IMS_PER_BATCH * EPOCHS
+    cfg.SOLVER.CHECKPOINT_PERIOD = len(train_dataset) // cfg.SOLVER.IMS_PER_BATCH // 2
     cfg.SOLVER.STEPS = (
         int(cfg.SOLVER.MAX_ITER * 0.6),
         int(cfg.SOLVER.MAX_ITER * 0.8),
     )
+    cfg.TEST.EVAL_PERIOD = len(train_dataset) // cfg.SOLVER.IMS_PER_BATCH
 
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 10
-
     cfg.OUTPUT_DIR = "./output"
+    cfg.MODEL.WEIGHTS = "./output/model_0004999.pth"
 
     trainer = BDDTrainer(cfg)
     trainer.metadata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
