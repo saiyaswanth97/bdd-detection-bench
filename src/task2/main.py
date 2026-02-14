@@ -40,15 +40,71 @@ class TOPKVisualizationHook(HookBase):
 
     def after_step(self):
         if (self.trainer.iter + 1) % self.eval_period == 0:
-            self.visualize_topk_predictions()
+            best, worst = self.pick_images_for_visualization()
+            self.visualize_sample(best, string_="Best")
+            self.visualize_sample(worst, string_="Worst")
 
-    def _visualize_gt_pred_clean(self, inp, output, metadata):
+    def pick_images_for_visualization(self):
+        model = self.trainer.model
+        # model.train()
+
+        top_k = []
+        bottom_k = []
+
+        mapper = get_transform(is_train=False, keep_gt=True)
+        data_loader = build_detection_test_loader(
+            self.cfg, self.dataset_name, mapper=mapper
+        )
+
+        with torch.no_grad():
+            for inputs in tqdm(data_loader, total=len(data_loader), desc="Evaluating"):
+                loss_dict = model(inputs)
+                total_loss = float(sum(loss_dict.values()).item())
+
+                # Best K
+                if len(top_k) < self.topk:
+                    heapq.heappush(top_k, (total_loss, inputs, loss_dict))
+                elif total_loss > top_k[0][0]:
+                    heapq.heapreplace(top_k, (total_loss, inputs, loss_dict))
+
+                # Worst K
+                if len(bottom_k) < self.topk:
+                    heapq.heappush(bottom_k, (-total_loss, inputs, loss_dict))
+                elif total_loss < -bottom_k[0][0]:
+                    heapq.heapreplace(bottom_k, (-total_loss, inputs, loss_dict))
+
+        top_k.sort(reverse=True, key=lambda x: x[0])  # Sort by loss descending
+        bottom_k.sort(key=lambda x: -x[0])
+
+        return top_k, bottom_k
+
+    def visualize_sample(self, dict, string_="Best"):
+        model = self.trainer.model
+        model.eval()
+
+        storage = self.trainer.storage
+        metadata = self.trainer.metadata
+
+        with torch.no_grad():
+            for i, sample in enumerate(dict):
+                loss, inp, _ = sample
+                outputs = model(inp)
+
+                # Visualize the predictions and GT
+                img = self._visualize_gt_pred_clean(inp[0], outputs[0], loss, metadata)
+                storage.put_image(f"{string_}_{i + 1}", img.transpose(2, 0, 1))
+
+        model.train()
+
+    def _visualize_gt_pred_clean(self, inp, output, score, metadata):
         img = cv2.imread(inp["file_name"])
         if img is None:
             raise FileNotFoundError(f"Image not found: {inp['file_name']}")
         img_rgb = img[:, :, ::-1]
 
         v = Visualizer(img_rgb, metadata=metadata)
+
+        output = __class__._apply_nms(output)
 
         # Draw GT in GREEN
         gt_boxes = inp["instances"].gt_boxes.tensor.numpy()
@@ -59,76 +115,73 @@ class TOPKVisualizationHook(HookBase):
             v.draw_text(metadata.thing_classes[cls], box[:2], color="green")
 
         # Draw Predictions in RED
-        pred_instances = output["instances"].to("cpu")
-        pred_boxes = pred_instances.pred_boxes.tensor.numpy()
-        pred_classes = pred_instances.pred_classes.numpy()
-        scores = pred_instances.scores.numpy()
+        pred_boxes = torch.stack([pred["box"] for pred in output]).cpu().numpy()
+        pred_classes = torch.stack([pred["class"] for pred in output]).cpu().numpy()
+        scores = torch.stack([pred["score"] for pred in output]).cpu().numpy()
 
         for box, cls, score in zip(pred_boxes, pred_classes, scores):
             label = f"{metadata.thing_classes[cls]} {score:.2f}"
             v.draw_box(box, edge_color="red")
             v.draw_text(label, box[:2], color="red")
 
-        return v.get_output().get_image()
-
-    def visualize_topk_predictions(self):
-        model = self.trainer.model
-        model.eval()
-
-        mapper = get_transform(is_train=False, keep_gt=True)
-        data_loader = build_detection_test_loader(
-            self.cfg, self.dataset_name, mapper=mapper
+        output = v.get_output().get_image()
+        cv2.putText(
+            output,
+            f"Loss: {score:.4f}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (255, 255, 255),
+            2,
         )
-        metadata = self.trainer.metadata
+        return output
 
-        # Min-heap for top-k (highest scores)
-        top_predictions = []
-        # Max-heap for bottom-k (lowest scores) - negate scores
-        bottom_predictions = []
+    @staticmethod
+    def _compute_iou(box1, box2):
+        x_left = torch.max(box1[0], box2[0])
+        y_top = torch.max(box1[1], box2[1])
+        x_right = torch.min(box1[2], box2[2])
+        y_bottom = torch.min(box1[3], box2[3])
 
-        with torch.no_grad():
-            for inputs in tqdm(data_loader, total=len(data_loader), desc="Evaluating"):
-                outputs = model(inputs)
+        intersection_area = torch.clamp(x_right - x_left, min=0) * torch.clamp(
+            y_bottom - y_top, min=0
+        )
+        box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
+        box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
+        union_area = box1_area + box2_area - intersection_area
 
-                for inp, output in zip(inputs, outputs):
-                    instances = output["instances"].to("cpu")
-                    if len(instances) == 0:
-                        continue
+        return torch.where(
+            union_area > 0, intersection_area / union_area, torch.tensor(0.0)
+        )
 
-                    scores = instances.scores.numpy()
+    @staticmethod
+    def _apply_nms(output, iou_threshold: float = 0.5) -> dict:
+        instances = output.get("instances", None)
+        if instances is None:
+            return []
 
-                    for score in scores:
-                        score = float(score)
+        pred_boxes = instances.pred_boxes
+        pred_classes = instances.pred_classes
+        scores = instances.scores
 
-                        # Top-k: maintain min-heap of size k
-                        if len(top_predictions) < self.topk:
-                            heapq.heappush(top_predictions, (score, inp, output))
-                        elif score > top_predictions[0][0]:
-                            heapq.heapreplace(top_predictions, (score, inp, output))
+        predictions = []
+        for box, cls, score in zip(pred_boxes, pred_classes, scores):
+            predictions.append({"box": box, "class": cls, "score": score})
 
-                        # Bottom-k: maintain max-heap (negated) of size k
-                        if len(bottom_predictions) < self.topk:
-                            heapq.heappush(bottom_predictions, (-score, inp, output))
-                        elif score < -bottom_predictions[0][0]:
-                            heapq.heapreplace(bottom_predictions, (-score, inp, output))
+        # Sort predictions by score in descending order
+        predictions = sorted(predictions, key=lambda x: x["score"], reverse=True)
+        selected_predictions = []
 
-        storage = self.trainer.storage
+        while predictions:
+            current = predictions.pop(0)
+            selected_predictions.append(current)
 
-        # Sort top predictions in descending order (highest first)
-        top_predictions.sort(reverse=True, key=lambda x: x[0])
-        for i, (score, inp, output) in enumerate(top_predictions):
-            img = self._visualize_gt_pred_clean(inp, output, metadata)
-            storage.put_image(f"Top_{i + 1}_score_{score:.3f}", img.transpose(2, 0, 1))
-
-        # Sort bottom predictions in ascending order (lowest first)
-        bottom_predictions.sort(key=lambda x: -x[0])
-        for i, (neg_score, inp, output) in enumerate(bottom_predictions):
-            img = self._visualize_gt_pred_clean(inp, output, metadata)
-            storage.put_image(
-                f"Bottom_{i + 1}_score_{-neg_score:.3f}", img.transpose(2, 0, 1)
-            )
-
-        model.train()
+            predictions = [
+                pred
+                for pred in predictions
+                if __class__._compute_iou(current["box"], pred["box"]) < iou_threshold
+            ]
+        return selected_predictions
 
 
 if __name__ == "__main__":
@@ -159,7 +212,7 @@ if __name__ == "__main__":
 
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 10
     cfg.OUTPUT_DIR = "./output"
-    cfg.MODEL.WEIGHTS = "./output/model_0004999.pth"
+    # cfg.MODEL.WEIGHTS = "./output/model_0004999.pth"
 
     trainer = BDDTrainer(cfg)
     trainer.metadata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
