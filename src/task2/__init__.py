@@ -9,6 +9,7 @@ __all__ = [
     "get_transform",
     "TopKLossVisualizationHook",
     "apply_nms_to_predictions",
+    "LossSample",
 ]
 
 
@@ -36,10 +37,15 @@ def __getattr__(name: str) -> Any:
                     "get_transform": get_transform,
                 }
             )
-        elif name in ["TopKLossVisualizationHook", "apply_nms_to_predictions"]:
+        elif name in [
+            "TopKLossVisualizationHook",
+            "apply_nms_to_predictions",
+            "LossSample",
+        ]:
             from .visualization import (
                 TopKLossVisualizationHook,
                 apply_nms_to_predictions,
+                LossSample,
             )
 
             # Cache the imports in the module namespace
@@ -47,6 +53,7 @@ def __getattr__(name: str) -> Any:
                 {
                     "TopKLossVisualizationHook": TopKLossVisualizationHook,
                     "apply_nms_to_predictions": apply_nms_to_predictions,
+                    "LossSample": LossSample,
                 }
             )
 

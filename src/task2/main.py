@@ -38,10 +38,10 @@ if __name__ == "__main__":
 
     cfg.DATASETS.TRAIN = ("bdd_dataset_train",)
     cfg.DATASETS.TEST = ("bdd_dataset_val",)
-    cfg.DATALOADER.NUM_WORKERS = 16
+    cfg.DATALOADER.NUM_WORKERS = 4
 
     cfg.SOLVER.AMP.ENABLED = False
-    cfg.SOLVER.IMS_PER_BATCH = 24
+    cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.02 * cfg.SOLVER.IMS_PER_BATCH / 16
     EPOCHS = 10
     cfg.SOLVER.MAX_ITER = len(train_dataset) // cfg.SOLVER.IMS_PER_BATCH * EPOCHS
@@ -62,8 +62,9 @@ if __name__ == "__main__":
     vis_hook = TopKLossVisualizationHook(
         cfg=cfg,
         dataset_name=cfg.DATASETS.TEST[0],
-        eval_period=len(train_dataset) // cfg.SOLVER.IMS_PER_BATCH,
+        eval_period=5,
         topk=5,
+        num_fixed_samples=5,
     )
     trainer.register_hooks([vis_hook])
     trainer.resume_or_load(resume=False)
