@@ -2,6 +2,23 @@
 
 Analysis of class distribution in the BDD100K dataset, including occurrence patterns, train-val ratios, and class co-occurrence matrices.
 
+## Key Insights
+
+- Most objects are cars (600K in 100K images). The they are followed by traffic signs & lights
+- Cars also appear in most images. 
+  - 12% images contain just cars.
+  - 85% images contain ontl (cars + traffic light + traffic sign) 
+  - Each image contains ~15 objects. But a lot of image contain >20 objects.
+- Train class object is very rare - 42 occurances in 100K image
+- Split seems good based on multiple metrics
+  - RoI; Frequnecy distribution
+- All classe frequnecy distribution seems to poission distribution
+- Causal classes
+  - (car; traffic light; traffic sign); (bike; rider); (rider; motor)
+- Bbox Area distribution
+  - Vehices seems to in range of [0, 0.1-0.2]
+  - Rider and bikes are in [0, 0.05]
+  - Traffic stuff are in [0, 0.05]. Traffic light is even worse where 90% are below 0.1% (32^2)
 
 ## 🔧 Requirements
 
@@ -117,6 +134,25 @@ Compares how many images contain each class between train and test sets.
 Shows which classes tend to appear together in the same images. Uses log scale for better visualization.
 
 ![Class Co-occurrence Matrix](images/class_cooccurrence.png)
+
+---
+
+### 7, Bboxes distribution
+
+Here we have how the boxes area & aspect ratio are spread across each class
+
+![Bbox area distribution](images/bbox_area_distribution_train.png)
+
+![Bbox aspect ratio distribution](images/bbox_aspect_distribution_train.png)
+
+Closer look for the traffic sign - It's distribution is heavily skewed towards small area (0.001)
+
+![Traffic Light Bbox area distribution](images/bbox_area_distribution_traffic_light.png)
+
+We also are plotting where each object will apear on the image. The split across the train and validation seems good.
+
+![Bbox RoI distribution](images/bbox_region_distribution_train.png)
+![Val Bbox RoI distribution](images/bbox_region_distribution_validation.png)
 
 ---
 
