@@ -40,6 +40,48 @@ def compute_class_distribution(files: List[str], all_occurrences: bool = False) 
     return class_counts
 
 
+def compute_class_full_box_split(files: List[str], type: str) -> dict:
+    """
+    Calculate the class distribution from a list of annotation files.
+    Args:
+        files (List[str]): List of paths to annotation JSON files.
+        type (str): Whether to compute the split based on "occlusion" or "truncation".
+    Returns:
+        dict: Dictionary mapping class names to their ratio of occluded/truncated to non-occluded/non-truncated instances.
+    Raises:
+        ValueError: If the type is not "occlusion" or "truncation".
+    """
+
+    class_splits = {class_name: [0, 0] for class_name in CLASSES.keys()}
+
+    for file in tqdm(files, desc="Processing annotation files"):
+        name, annotations = parse_annotations(str(file))
+
+        for annotation in annotations:
+            class_name = annotation.class_name
+            if type == "occlusion":
+                # TODO check for occlusion in the dataset and update the code accordingly
+                value = annotation.occlusion
+            elif type == "truncation":
+                value = annotation.truncation
+            else:
+                raise ValueError(
+                    f"Invalid type {type}. Expected 'occlusion' or 'truncation'."
+                )
+            if value:
+                class_splits[class_name][1] += 1
+            else:
+                class_splits[class_name][0] += 1
+
+    class_ratio = {
+        class_name: class_splits[class_name][1]
+        / (class_splits[class_name][1] + class_splits[class_name][0])
+        for class_name in CLASSES.keys()
+    }
+
+    return class_ratio
+
+
 def compute_class_cooccurrence_matrix(files: List[str]) -> np.ndarray:
     """
     Calculate the co-occurrence of classes from a list of annotation files.
@@ -118,6 +160,11 @@ if __name__ == "__main__":
         raise FileNotFoundError(
             f"No JSON files found in the train data folder: {train_data_folder}. Please check the contents."
         )
+    val_files = list(Path(val_data_folder).glob("*.json"))
+    if not val_files:
+        raise FileNotFoundError(
+            f"No JSON files found in the validation data folder: {val_data_folder}. Please check the contents."
+        )
 
     train_counts_per_image = compute_class_distribution(
         train_files, all_occurrences=False
@@ -129,12 +176,6 @@ if __name__ == "__main__":
         else 0
         for class_name in CLASSES.keys()
     }
-
-    val_files = list(Path(val_data_folder).glob("*.json"))
-    if not val_files:
-        raise FileNotFoundError(
-            f"No JSON files found in the validation data folder: {val_data_folder}. Please check the contents."
-        )
 
     val_counts_per_image = compute_class_distribution(val_files, all_occurrences=False)
     val_counts_all = compute_class_distribution(val_files, all_occurrences=True)
@@ -197,3 +238,22 @@ if __name__ == "__main__":
     plt.title("Co-occurrence of Classes in BDD100K Test Set")
     plt.tight_layout()
     plt.savefig("src/task1/images/class_cooccurrence.png")
+
+    class_full_box_split_occlusion = compute_class_full_box_split(
+        train_files, type="occlusion"
+    )
+    plot_class_distribution(
+        class_full_box_split_occlusion,
+        "Ratio of Occluded to Non-Occluded Instances for Each Class in BDD100K Train Set",
+        "src/task1/images/class_occlusion_ratio.png",
+        log_scale=False,
+    )
+    class_full_box_split_truncation = compute_class_full_box_split(
+        train_files, type="truncation"
+    )
+    plot_class_distribution(
+        class_full_box_split_truncation,
+        "Ratio of Truncated to Non-Truncated Instances for Each Class in BDD100K Train Set",
+        "src/task1/images/class_truncation_ratio.png",
+        log_scale=False,
+    )
