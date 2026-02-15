@@ -16,9 +16,7 @@ def train(model, dataloader, optimizer, device, epoch, scaler, writer):
     model.train()
     total_loss = 0
 
-    pbar = tqdm(dataloader, desc=f"Epoch {epoch}")
-    idx = 0
-    for images, targets in pbar:
+    for images, targets in tqdm(dataloader, desc=f"Epoch {epoch}"):
         images = [img.to(device) for img in images]
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         optimizer.zero_grad()
@@ -27,7 +25,9 @@ def train(model, dataloader, optimizer, device, epoch, scaler, writer):
             loss_dict = model(images, targets)
             for key, value in loss_dict.items():
                 writer.add_scalar(
-                    f"Loss/{key}", value.item(), epoch * len(dataloader) + idx
+                    f"Loss/{key}",
+                    value.item(),
+                    epoch * len(dataloader) + dataloader._index,
                 )
             losses = sum(loss for loss in loss_dict.values())
 
@@ -40,10 +40,6 @@ def train(model, dataloader, optimizer, device, epoch, scaler, writer):
         # optimizer.step()
 
         total_loss += losses.item()
-        pbar.set_postfix({"loss": f"{losses.item():.4f}"})
-        idx += 1
-        if idx % 10 == 0:
-            break
 
     average_loss = total_loss / len(dataloader)
     writer.add_scalar("Loss/average", average_loss, epoch)
@@ -53,7 +49,6 @@ def train(model, dataloader, optimizer, device, epoch, scaler, writer):
 def validate(model, dataloader, device, writer):
     model.eval()
     total_mAP = 0
-    idx = 0
     # Implement validation logic here (e.g., calculate mAP)
     for images, targets in dataloader:
         images = [img.to(device) for img in images]
@@ -84,9 +79,6 @@ def validate(model, dataloader, device, writer):
                     "Validation/mAP", mAP, 0
                 )  # Log mAP (last element in list)
                 total_mAP += mAP
-                idx += 1
-        if idx % 10 == 0:
-            break
     average_mAP = total_mAP / len(dataloader)
     writer.add_scalar("Validation/average_mAP", average_mAP, 0)
     print(f"Validation mAP: {average_mAP:.4f}")
