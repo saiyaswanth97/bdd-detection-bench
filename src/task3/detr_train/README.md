@@ -1,35 +1,74 @@
-# Detr Training:
+# DETR Training on BDD100K
 
-Repo used: https://github.com/lyuwenyu/RT-DETR/tree/main
-Model Used: RT-DETRv2-S
-Things changed:
-    - Dataloader:
-      - Update data location and increase bacthsize to 16
-    - Optimizer:
-      - Remove LR sceduler
-    - Main config:
-      - Change epochs to 30 & lower learning rate by 25% 
-Files are included in `configs` for re-test
-Run command: `python3 tools/train.py -c <coinfig> -t <model_ckpt>`
+**Repository:** [RT-DETR](https://github.com/lyuwenyu/RT-DETR/tree/main)
+**Model:** RT-DETRv2-S
 
-## Results:
+## Configuration Changes
 
-- The final mAP is 32.0, this is lot lower than COCO score of 48.1. Plost are included (images/eval_metrics.png)
-- Small object mAP is the biggest bottle neck - 0.141
-- Gap between AR@1 vs AR@100 - 0.231 vs 0.495. Due the image has ~15 instances
-- Small object AR vs AP - 0.319 vs 0.141. We can find the object but not localize it. 
-  
-Next steps:
-- Increase LR & retrain
-- Increase image size - this will increase mAP_small score
-- Hyper-param tuning
+| Component | Modification |
+|-----------|--------------|
+| **Dataloader** | Updated data paths; increased batch size to 16 |
+| **Optimizer** | Removed LR scheduler |
+| **Training** | 30 epochs; reduced learning rate by 25% |
 
+**Run Command:**
+```bash
+python3 tools/train.py -c <config> -t <model_ckpt>
+```
 
-### Appendix - Train losses
+Config files available in `configs/` directory.
 
-Images to add: (total_loss.png); (loss_giou.png); (loss_bbox.png); (loss_vfl.png)
+---
 
-- Overall loss is not yet platued
-- Classification (variable focal loss) is noisy during training
-- bbox (L1 regression loss) is similar range to gIoU.
-  - Tuning the hyperparms might help with mAP_small
+## Results
+
+**Final mAP: 32.0** (vs. COCO baseline: 48.1)
+
+![Evaluation Metrics](images/eval_metrics.png)
+
+### Key Findings
+
+- **Small object mAP: 0.141** — primary bottleneck
+- **AR gap (AR@1 vs AR@100): 0.231 → 0.495** — reflects ~15 instances/image
+- **Small object localization issue:** AR=0.319 vs AP=0.141 (detection works, localization fails)
+
+### Next Steps
+
+- [ ] Increase learning rate and retrain
+- [ ] Increase input image resolution (improve small object mAP)
+- [ ] Hyperparameter tuning for bbox regression
+
+---
+
+## Training Loss Analysis
+
+### Overall Loss
+![Total Loss](images/total_loss.png)
+
+Loss has not plateaued — model still learning.
+
+### Bounding Box Losses
+
+<table>
+<tr>
+<td width="50%">
+
+**GIoU Loss**
+![GIoU Loss](images/loss_giou.png)
+
+</td>
+<td width="50%">
+
+**Bbox L1 Loss**
+![Bbox Loss](images/loss_bbox.png)
+
+</td>
+</tr>
+</table>
+
+L1 regression loss magnitude comparable to GIoU. Tuning loss weights may improve small object mAP.
+
+### Classification Loss (VFL)
+![VFL Loss](images/loss_vfl.png)
+
+Variational Focal Loss shows noise during training — consider adjusting focal loss parameters.
