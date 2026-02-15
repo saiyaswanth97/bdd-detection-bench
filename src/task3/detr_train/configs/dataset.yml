@@ -1,0 +1,40 @@
+evaluator:
+  task: detection
+  evaluator:
+  type: CocoEvaluator
+  iou_types: ['bbox', ]
+
+num_classes: 10
+remap_mscoco_category: False
+
+train_dataloader:
+  type: DataLoader
+  dataset:
+    type: CocoDetection
+    img_folder: ../../bdd-detection-bench/data/bdd100k_images_100k/100k/train/
+    ann_file: ../../bdd-detection-bench/data/bdd100k_labels/100k/train.json
+    return_masks: False
+    transforms:
+      type: Compose
+      ops: ~
+  shuffle: True
+  num_workers: 8
+  drop_last: True
+  collate_fn:
+    type: BatchImageCollateFunction
+
+val_dataloader:
+  type: DataLoader
+  dataset:
+    type: CocoDetection
+    img_folder: ../../bdd-detection-bench/data/bdd100k_images_100k/100k/val/
+    ann_file: ../../bdd-detection-bench/data/bdd100k_labels/100k/val.json
+    return_masks: False
+    transforms:
+      type: Compose
+      ops: ~
+  shuffle: False
+  num_workers: 2
+  drop_last: False
+  collate_fn:
+    type: BatchImageCollateFunction
