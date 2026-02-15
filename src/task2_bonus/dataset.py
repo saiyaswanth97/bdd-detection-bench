@@ -50,7 +50,7 @@ class BDDDataset(Dataset):
                 x, y, w, h = annotation.bbox.to_coco()
                 if w > 0 and h > 0:
                     bboxes.append([x, y, x + w, y + h])  # Convert to [x1, y1, x2, y2]
-                    classes.append(annotation.class_id)
+                    classes.append(annotation.class_id + 1)
                 else:
                     total_invalid += 1
 
