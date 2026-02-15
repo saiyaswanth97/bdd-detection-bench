@@ -64,6 +64,8 @@ Comprehensive analysis of class distribution in the BDD100K dataset, including:
 
 **[→ See Task 1 Documentation](src/task1/README.md)**
 
+**[→ Docker Setup for Task 1](docker/README.md)**
+
 ---
 
 ### Task 2: Object Detection with Detectron2
