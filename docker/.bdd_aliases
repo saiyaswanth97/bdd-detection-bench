@@ -1,0 +1,29 @@
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+source ${SCRIPT_DIR}/.bdd_env_variables
+
+# Docker aliases
+alias docker-run="bash docker/scripts/run_container.sh"
+alias dr="docker-run"
+alias docker-stop="bash docker/scripts/stop_container.sh"
+alias ds="docker-stop"
+alias docker-build="bash docker/scripts/build_image.sh"
+alias db="docker-build"
+alias docker-status="docker ps -f \"name=bdd-detection-bench\""
+
+# Linux aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias c='clear'
+alias ..='cd ..'
+
+# Git aliases
+alias add="git add -A"
+alias gs="git status"
+alias gc="git commit"
+alias gp="git push"
+
+# Python aliases
+alias python='python3'
+alias pip='pip3'
