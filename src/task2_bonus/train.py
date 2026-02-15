@@ -16,7 +16,9 @@ def train(model, dataloader, optimizer, device, epoch, scaler, writer):
     model.train()
     total_loss = 0
 
-    for images, targets in tqdm(dataloader, desc=f"Epoch {epoch}"):
+    for batch_idx, (images, targets) in enumerate(
+        tqdm(dataloader, desc=f"Epoch {epoch}")
+    ):
         images = [img.to(device) for img in images]
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         optimizer.zero_grad()
@@ -27,7 +29,7 @@ def train(model, dataloader, optimizer, device, epoch, scaler, writer):
                 writer.add_scalar(
                     f"Loss/{key}",
                     value.item(),
-                    epoch * len(dataloader) + dataloader._index,
+                    epoch * len(dataloader) + batch_idx,
                 )
             losses = sum(loss for loss in loss_dict.values())
 
@@ -99,7 +101,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load dataset
-    train_dataset = BDDDataset(TRAIN_ANNO_DIR, TRAIN_IMG_DIR, device, train=True)
+    train_dataset = BDDDataset(TRAIN_ANNO_DIR, TRAIN_IMG_DIR, train=True)
     train_loader = DataLoader(
         train_dataset,
         batch_size=BATCH_SIZE,

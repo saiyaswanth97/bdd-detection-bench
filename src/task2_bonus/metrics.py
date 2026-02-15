@@ -2,7 +2,7 @@
 
 import torch
 from torchvision.ops import box_iou
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Optional
 from src.utils.parse_annotations import CLASSES
 
 
@@ -52,14 +52,14 @@ def calculate_precision_recall_single_class(
 def calculate_ap_per_class(
     gt_boxes: torch.Tensor,
     pred_boxes: torch.Tensor,
-    iou_range: torch.Tensor | None = None,
+    iou_range: Optional[torch.Tensor] = None,
 ) -> List[float]:
     """Calculate Average Precision (AP) for a single class.
     Args:
         gt_boxes (torch.Tensor): Tensor of ground truth bounding boxes [N, 4] in [x1, y1, x2, y2]
         pred_boxes (torch.Tensor): Tensor of predicted bounding boxes [M, 4] in [x1, y1, x2, y2]
                     sorted by confidence score in descending order.
-        iou_range (torch.Tensor | None): Range of IoU thresholds to calculate AP over (default: [0.5, 0.55, ..., 0.95])
+        iou_range (Optional[torch.Tensor]): Range of IoU thresholds to calculate AP over (default: [0.5, 0.55, ..., 0.95])
     Returns:
         List[float]: List of AP values for each IoU threshold, with mAP appended at the end
     """
