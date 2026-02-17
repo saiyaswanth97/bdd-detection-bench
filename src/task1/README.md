@@ -137,11 +137,15 @@ Shows which classes tend to appear together in the same images. Uses log scale f
 
 ---
 
-### 7, Bboxes distribution
+### 7. Bboxes distribution
 
 Here we have how the boxes area & aspect ratio are spread across each class
 
 ![Bbox area distribution](images/bbox_area_distribution_train.png)
+
+| Small | Medium | Large |
+|-------|--------|-------|
+| ![Small](images/bbox_area_distribution_small.png) | ![Medium](images/bbox_area_distribution_medium.png) | ![Large](images/bbox_area_distribution_large.png) |
 
 ![Bbox aspect ratio distribution](images/bbox_aspect_distribution_train.png)
 

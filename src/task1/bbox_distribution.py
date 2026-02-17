@@ -114,6 +114,48 @@ if __name__ == "__main__":
             f"No JSON files found in the validation data folder: {val_data_folder}. Please check the contents."
         )
 
+    class_bbox_distribution = compute_bbox_area_distribution(train_files)
+    small_end = 32 * 32 / 720 / 1280
+    medium_end = 96 * 96 / 720 / 1280
+    size_iters = [
+        ["small", (0, small_end)],
+        ["medium", (small_end, medium_end)],
+        ["large", (medium_end, 1)],
+    ]
+    edges = np.concatenate(
+        [
+            np.linspace(0, small_end, 50, endpoint=False),
+            np.linspace(small_end, medium_end, 50, endpoint=False),
+            np.linspace(medium_end, 1, 100),
+        ]
+    )
+
+    for bin_name, (bin_start, bin_end) in size_iters:
+        fig = plt.figure(figsize=(12, 8))
+        for i, (class_name, areas) in enumerate(class_bbox_distribution.items()):
+            plt.subplot(4, 3, i + 1)
+            weights = np.ones(len(areas)) / len(areas)
+            plt.hist(
+                areas,
+                bins=edges,
+                color="blue",
+                alpha=0.7,
+                weights=weights,
+            )
+            plt.title(
+                f"{class_name.capitalize()} Area Distribution ({bin_name.capitalize()})"
+            )
+            plt.xlabel("Area")
+            plt.ylabel("Frequency %")
+            plt.yscale("log")
+            plt.ylim(1e-4, 1)
+            plt.grid(axis="y", alpha=0.75)
+            plt.tight_layout()
+            plt.xlim(bin_start, bin_end)
+        # plt.show()
+        plt.savefig(f"src/task1/images/bbox_area_distribution_{bin_name}.png")
+        plt.close()
+
     iterations = [[train_files, "Train"], [val_files, "Validation"]]
 
     for files, split in iterations:
